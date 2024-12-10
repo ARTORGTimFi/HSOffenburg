@@ -9,12 +9,12 @@
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioCtx.createMediaStreamSource(stream);
     const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 512; // kleiner für schnelleres Rendering
+    analyser.fftSize = 1024; 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     source.connect(analyser);
 
-    // Frequenzband Input-Elemente und Labels
+    // Elemente für Frequenzbänder (annehmen, dass sie in spectrogram.html definiert sind)
     const lowFreqInput = document.getElementById('lowFreq');
     const midFreqInput = document.getElementById('midFreq');
     const highFreqInput = document.getElementById('highFreq');
@@ -31,65 +31,77 @@
     lowFreqInput.addEventListener('input', updateLabels);
     midFreqInput.addEventListener('input', updateLabels);
     highFreqInput.addEventListener('input', updateLabels);
-
     updateLabels();
 
-    // Hilfsfunktion: Frequenz zu Index im Frequenz-Array
     function freqToIndex(freq) {
         const nyquist = audioCtx.sampleRate / 2;
         return Math.round(freq / nyquist * bufferLength);
     }
 
-    // Hintergrundfarbe (z. B. dunkles Blau)
-    ctx.fillStyle = '#001080';
+    // Einen Farbverlauf für das Spektrogramm erstellen, um ein ähnliches Farbfeeling wie bei maztr.com zu erreichen
+    // Wir nehmen einen vertikalen Verlauf von unten (tiefe Frequenzen) nach oben (hohe Frequenzen).
+    // Unten dunklere Farben, oben hellere.
+    // Du kannst die Farben nach Belieben anpassen.
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0.0, '#00008B'); // Dunkelblau unten
+    gradient.addColorStop(0.25, '#008B8B'); 
+    gradient.addColorStop(0.5, '#00CED1'); 
+    gradient.addColorStop(0.75, '#ADFF2F'); 
+    gradient.addColorStop(1.0, '#FFFF00'); // Helles Gelb oben
+
+    // Hintergrund füllen
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0,0,width,height);
 
-    // Funktion zum Zeichnen der Achsen
+    // Optionale Parameter für Zeit und Frequenzachsen
+    const leftMargin = 40;
+    const bottomMargin = 20;
+    const usableWidth = width - leftMargin;
+    const usableHeight = height - bottomMargin;
+
+    // Zeichnen der Achsen
     function drawAxes() {
         ctx.save();
-        ctx.strokeStyle = 'white';  // Helle Farbe für dunklen Hintergrund
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
         ctx.fillStyle = 'white';
         ctx.lineWidth = 1;
         ctx.font = '10px sans-serif';
 
-        // Y-Achse links bei x=40
+        // Y-Achse (Frequenz)
         ctx.beginPath();
-        ctx.moveTo(40, 0);
-        ctx.lineTo(40, height-20); // Bis kurz vor den X-Achsen-Bereich
+        ctx.moveTo(leftMargin, 0);
+        ctx.lineTo(leftMargin, usableHeight);
         ctx.stroke();
 
-        // X-Achse unten
+        // X-Achse (Zeit)
         ctx.beginPath();
-        ctx.moveTo(40, height-20);
-        ctx.lineTo(width, height-20);
+        ctx.moveTo(leftMargin, usableHeight);
+        ctx.lineTo(width, usableHeight);
         ctx.stroke();
 
-        // Frequenzbeschriftung (Y-Achse)
+        // Frequenzbeschriftungen
         const nyquist = audioCtx.sampleRate / 2;
-        const freqTicks = [0, 1000, 2000, 3000, 4000, Math.round(nyquist)];
+        const freqTicks = [0, 1000, 2000, 4000, Math.round(nyquist)];
         freqTicks.forEach(f => {
             const fi = freqToIndex(f);
-            const y = height - 20 - Math.round((fi / bufferLength)*(height-21));
-            // Markierungslinie
+            const y = usableHeight - Math.round((fi / bufferLength) * usableHeight);
             ctx.beginPath();
-            ctx.moveTo(35, y);
-            ctx.lineTo(40, y);
+            ctx.moveTo(leftMargin - 5, y);
+            ctx.lineTo(leftMargin, y);
             ctx.stroke();
-            // Text
             ctx.fillText(f + ' Hz', 5, y+3);
         });
 
-        // Zeitbeschriftung (X-Achse)
-        // Annahme: ~60 FPS -> jede Spalte ~ 1/60 s
-        // Rechte Seite = 0 s (jetzt)
+        // Zeitbeschriftung (einfach annehmen, ~60fps)
+        // Rechte Seite = jetzt = 0s
         const secondsPerPixel = 1/60;
-        const totalSeconds = (width - 40)*secondsPerPixel;
+        const totalSeconds = usableWidth * secondsPerPixel;
         for (let t = 0; t >= -totalSeconds; t -= 1) {
-            const xPos = 40 + ((-t) / secondsPerPixel);
-            if (xPos >= 40 && xPos <= width) {
+            const xPos = leftMargin + ((-t) / secondsPerPixel);
+            if (xPos >= leftMargin && xPos <= width) {
                 ctx.beginPath();
-                ctx.moveTo(xPos, height - 20);
-                ctx.lineTo(xPos, height - 15);
+                ctx.moveTo(xPos, usableHeight);
+                ctx.lineTo(xPos, usableHeight + 5);
                 ctx.stroke();
                 ctx.fillText(t + ' s', xPos - 10, height - 5);
             }
@@ -98,59 +110,60 @@
         ctx.restore();
     }
 
+    // Zeichnen des Spektrogramms mit verschobenem Hintergrund
     function drawSpectrogram() {
-        // Spektrogramm um 1px nach links verschieben
-        // Nur den Bereich oberhalb der X-Achse und rechts der Y-Achse verschieben (x>40, y<height-20)
-        const imageData = ctx.getImageData(41, 0, width-41, height-21); 
-        ctx.putImageData(imageData, 40, 0);
+        // Bestehendes Bild nach links schieben
+        const imageData = ctx.getImageData(leftMargin+1, 0, usableWidth-1, usableHeight); 
+        ctx.putImageData(imageData, leftMargin, 0);
 
-        // Neue Spalte am rechten Rand zeichnen
         analyser.getByteFrequencyData(dataArray);
 
-        // Hintergrund für die neue Spalte
-        ctx.fillStyle = '#001080'; // Dunkles Blau für Hintergrund
-        ctx.fillRect(width-1, 0, 1, height-21);
-
+        // Neue Spalte am rechten Rand
+        // Wir verwenden den Farbverlauf "gradient" nicht direkt pixelweise.
+        // Stattdessen kombinieren wir die Amplitude mit dem Verlauf.
         for (let i = 0; i < bufferLength; i++) {
             const value = dataArray[i];
             const percent = value / 255.0;
-            const y = height - 21 - Math.round((i / bufferLength) * (height-21));
-            const hue = Math.round((1 - percent) * 240); 
-            ctx.fillStyle = 'hsl(' + hue + ',100%,' + (percent * 50 + 25) + '%)';
+            const y = usableHeight - Math.round((i / bufferLength) * usableHeight);
+
+            // Wir erstellen aus gradient eine Farbe, indem wir mit globalAlpha arbeiten
+            ctx.globalAlpha = percent;  
+            ctx.fillStyle = gradient;
             ctx.fillRect(width - 1, y, 1, 1);
         }
 
-        // Frequenzlinien für die definierten "Elektroden"
-        ctx.strokeStyle = 'white';
+        ctx.globalAlpha = 1.0; // Alpha zurücksetzen
+
+        // Frequenzlinien für die Elektroden
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
         ctx.lineWidth = 1;
-        const yLow = height - 21 - Math.round((freqToIndex(parseFloat(lowFreqInput.value))/bufferLength)*(height-21));
+        const yLow = usableHeight - Math.round((freqToIndex(parseFloat(lowFreqInput.value))/bufferLength)*usableHeight);
         ctx.beginPath();
         ctx.moveTo(width - 1, yLow);
         ctx.lineTo(width - 5, yLow);
         ctx.stroke();
 
-        const yMid = height - 21 - Math.round((freqToIndex(parseFloat(midFreqInput.value))/bufferLength)*(height-21));
+        const yMid = usableHeight - Math.round((freqToIndex(parseFloat(midFreqInput.value))/bufferLength)*usableHeight);
         ctx.beginPath();
         ctx.moveTo(width - 1, yMid);
         ctx.lineTo(width - 5, yMid);
         ctx.stroke();
 
-        const yHigh = height - 21 - Math.round((freqToIndex(parseFloat(highFreqInput.value))/bufferLength)*(height-21));
+        const yHigh = usableHeight - Math.round((freqToIndex(parseFloat(highFreqInput.value))/bufferLength)*usableHeight);
         ctx.beginPath();
         ctx.moveTo(width - 1, yHigh);
         ctx.lineTo(width - 5, yHigh);
         ctx.stroke();
 
-        // Achsen zuletzt zeichnen, damit sie über dem Spektrogramm liegen
+        // Achsen neu darüber zeichnen
         drawAxes();
 
         requestAnimationFrame(drawSpectrogram);
     }
 
-    // Initiales Zeichnen
-    ctx.fillStyle = '#001080';
+    // Start
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0,0,width,height);
     drawAxes();
     drawSpectrogram();
-
 })();
