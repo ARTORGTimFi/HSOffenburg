@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Live Fourieranalyse mit Cochlea-Simulation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Live Fourieranalyse mit Cochlea-Simulation</h1>
+    <p>Erlauben Sie den Zugriff auf Ihr Mikrofon, um eine Echtzeitanalyse durchzuführen.</p>
+
+    <div class="controls">
+        <h2>Einstellungen</h2>
+        <div class="control-group">
+            <label for="threshold">Aktivierungs-Threshold (Lautstärke): <span id="thresholdValue">50</span></label>
+            <input type="range" id="threshold" min="0" max="255" value="50" step="1">
+        </div>
+        <div class="control-group">
+            <h3>Frequenzbereiche für Elektroden</h3>
+            <p>Pass die unteren Grenzen an (obere ergeben sich aus der nächsten unteren Grenze):</p>
+            <div class="freq-bands">
+                <div class="freq-band">
+                    <label>Elektrode 1 (Apex): <input type="number" id="band1Min" value="200"> Hz bis <span id="band1Max">400</span> Hz</label>
+                </div>
+                <div class="freq-band">
+                    <label>Elektrode 2: <input type="number" id="band2Min" value="400"> Hz bis <span id="band2Max">800</span> Hz</label>
+                </div>
+                <div class="freq-band">
+                    <label>Elektrode 3: <input type="number" id="band3Min" value="800"> Hz bis <span id="band3Max">1600</span> Hz</label>
+                </div>
+                <div class="freq-band">
+                    <label>Elektrode 4: <input type="number" id="band4Min" value="1600"> Hz bis <span id="band4Max">3200</span> Hz</label>
+                </div>
+                <div class="freq-band">
+                    <label>Elektrode 5 (Basis): <input type="number" id="band5Min" value="3200"> Hz bis <span id="band5Max">6000</span> Hz</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cochlea-container">
+        <!-- Spiralähnliche Darstellung der Cochlea: 
+             Wir platzieren Elektroden entlang einer Spiralform (einfach simuliert),
+             jede Elektrode repräsentiert ein Frequenzband. -->
+        <svg id="cochleaSvg" viewBox="0 0 200 200">
+            <!-- Spiralpfad (vereinfacht) -->
+            <path d="M100,100 
+                     C100,100 120,80 140,100 
+                     C160,120 120,140 100,120
+                     C80,100 60,80 80,60
+                     C100,40 140,40 140,80
+                     C140,120 100,140 80,140
+                     C60,140 40,100 60,80
+                     C80,60 120,60 120,100
+                     C120,140 80,140 60,120
+                     Z" 
+                  fill="none" stroke="#ccc" stroke-width="1" />
+
+            <!-- Elektroden: Wir platzieren sie manuell oder approximieren Positionen. 
+                 Hier für Einfachheit fixe Positionen, die etwa der Spiralform folgen -->
+            <circle id="electrode1" class="electrode" cx="100" cy="120" r="6"></circle>
+            <circle id="electrode2" class="electrode" cx="120" cy="100" r="6"></circle>
+            <circle id="electrode3" class="electrode" cx="100" cy="80" r="6"></circle>
+            <circle id="electrode4" class="electrode" cx="80" cy="80" r="6"></circle>
+            <circle id="electrode5" class="electrode" cx="80" cy="100" r="6"></circle>
+
+            <!-- Labels für Elektroden -->
+            <text id="label1" x="100" y="140" text-anchor="middle" font-size="10" fill="#333">200-400 Hz</text>
+            <text id="label2" x="120" y="120" text-anchor="middle" font-size="10" fill="#333">400-800 Hz</text>
+            <text id="label3" x="100" y="60" text-anchor="middle" font-size="10" fill="#333">800-1600 Hz</text>
+            <text id="label4" x="80" y="60" text-anchor="middle" font-size="10" fill="#333">1600-3200 Hz</text>
+            <text id="label5" x="80" y="120" text-anchor="middle" font-size="10" fill="#333">3200-6000 Hz</text>
+        </svg>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
