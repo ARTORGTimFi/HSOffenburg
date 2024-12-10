@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Spektrogramm-Analyse</title>
+    <link rel="stylesheet" href="spectrogram.css">
+</head>
+<body>
+    <h1>Spektrogramm-Analyse</h1>
+    <p>
+        Unten sehen Sie ein Live-Spektrogramm des Mikrofoneingangs.  
+        Die vertikale Achse steht für die Frequenz (oben hoch, unten tief), die horizontale Achse für die Zeit.  
+        Links wird kontinuierlich das aktuelle Frequenzspektrum aufgezeichnet und nach rechts verschoben, wodurch ein "Streifen" entsteht.
+    </p>
+
+    <div class="controls">
+        <h2>Einstellungen</h2>
+        <p>Definieren Sie die Frequenzbänder für die "Elektroden":</p>
+        <div class="freq-band">
+            <label>Elektrode (niedrige Frequenzen): <input type="number" id="lowFreq" value="200"> Hz</label>
+        </div>
+        <div class="freq-band">
+            <label>Elektrode (mittlere Frequenzen): <input type="number" id="midFreq" value="2000"> Hz</label>
+        </div>
+        <div class="freq-band">
+            <label>Elektrode (hohe Frequenzen): <input type="number" id="highFreq" value="5000"> Hz</label>
+        </div>
+    </div>
+
+    <div class="spectrogram-container">
+        <canvas id="spectrogramCanvas" width="500" height="256"></canvas>
+        <div class="electrodes-info">
+            <h3>Elektroden-Kanäle</h3>
+            <div class="electrode-channel low"></div> Niedrige Frequenzen (<span id="labelLowFreq">200</span> Hz - ...)
+            <br>
+            <div class="electrode-channel mid"></div> Mittlere Frequenzen (~<span id="labelMidFreq">2000</span> Hz)
+            <br>
+            <div class="electrode-channel high"></div> Hohe Frequenzen (> <span id="labelHighFreq">5000</span> Hz)
+        </div>
+    </div>
+
+    <script src="spectrogram.js"></script>
+</body>
+</html>
