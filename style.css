@@ -1,0 +1,61 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background: #f9f9f9;
+    color: #333;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+.controls {
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.cochlea-container {
+    text-align: center;
+    margin: 20px auto;
+    width: 300px;
+}
+
+.electrode {
+    fill: grey;
+    stroke: black;
+    stroke-width: 1;
+    transition: fill 0.3s;
+}
+
+.electrode.active {
+    fill: red;
+}
+
+.freq-bands {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.freq-band label {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.freq-band input {
+    width: 60px;
+}
